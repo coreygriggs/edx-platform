@@ -73,9 +73,9 @@ class RefundReport(Report):
     def csv_report_row(self, item):
         return [
             item.order_id,
-            item.user.get_full_name(),
+            item.user.profile.name,
             item.fulfilled_time,
-            item.refund_requested_time,  # TODO Change this torefund_fulfilled once we start recording that value
+            item.refund_requested_time,  # TODO Change this to refund_fulfilled once we start recording that value
             item.line_cost,
             item.service_fee,
         ]
@@ -129,18 +129,18 @@ class CertificateStatusReport(Report):
             if (start_letter.lower() <= course_id.lower()) and (end_letter.lower() >= course_id.lower()) and (get_course_by_id(course_id) is not None):
                 cur_course = get_course_by_id(course_id)
                 university = cur_course.org
-                course = cur_course.number + " " + cur_course.display_name  # TODO add term (i.e. Fall 2013)?
+                course = cur_course.number + " " + cur_course.display_name_with_default  # TODO add term (i.e. Fall 2013)?
                 enrollments = CourseEnrollment.enrollments_in(course_id)
                 total_enrolled = enrollments.count()
                 audit_enrolled = enrollments.filter(mode="audit").count()
                 honor_enrolled = enrollments.filter(mode="honor").count()
                 # Since every verified enrollment has 1 and only 1 cert item, let's just query those
-                verified_enrollments = CertificateItem.objects.filter(course_id=course_id, mode="verified", status="purchased")
+                verified_enrollments = CertificateItem.verified_certificates_in(course_id)
                 verified_enrolled = verified_enrollments.count()
-                gross_rev_temp = CertificateItem.objects.filter(course_id=course_id, mode="verified", status="purchased").aggregate(Sum('unit_cost'))
+                gross_rev_temp = verified_enrollments.aggregate(Sum('unit_cost'))
                 gross_rev = gross_rev_temp['unit_cost__sum']
                 gross_rev_over_min = gross_rev - (CourseMode.objects.get(course_id=course_id, mode_slug="verified").min_price * verified_enrolled)
-                refunded_enrollments = CertificateItem.objects.filter(course_id='course_id', mode="verified", status="refunded")
+                refunded_enrollments = CertificateItem.verified_certificates_refunded_in(course_id)
                 number_of_refunds = refunded_enrollments.count()
                 dollars_refunded_temp = refunded_enrollments.aggregate(Sum('unit_cost'))
                 if dollars_refunded_temp['unit_cost__sum'] is None:
@@ -195,7 +195,7 @@ class UniversityRevenueShareReport(Report):
                 except:
                     break
                 university = cur_course.org
-                course = cur_course.number + " " + cur_course.display_name
+                course = cur_course.number + " " + cur_course.display_name_with_default
                 num_transactions = 0  # TODO clarify with billing what transactions are included in this (purchases? refunds? etc)
 
                 all_paid_certs = CertificateItem.objects.filter(course_id=course_id, status="purchased")

@@ -568,3 +568,13 @@ class CertificateItem(OrderItem):
                  "Please include your order number in your e-mail. "
                  "Please do NOT include your credit card information.").format(
                      billing_email=settings.PAYMENT_SUPPORT_EMAIL)
+
+    @classmethod
+    def verified_certificates_in(cls, course_id):
+        """Return a queryset of CertificateItem for every purchased verified enrollment in course_id."""
+        CertificateItem.objects.filter(course_id=course_id, mode="verified", status="purchased")
+
+    @classmethod
+    def verified_certificates_refunded_in(cls, course_id):
+        """Return a queryset of CertificateItem for every refunded verified enrollment in course_id."""
+        CertificateItem.objects.filter(course_id=course_id, mode="verified", status="refunded")
