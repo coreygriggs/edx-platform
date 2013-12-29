@@ -1,9 +1,9 @@
 import os, sys, logging
 from unittest import TestCase
-from nose.plugins.skip import SkipTest
 
 from config import LOCALE_DIR
 from execute import call
+
 
 def test_po_files(root=LOCALE_DIR):
     """
@@ -12,7 +12,7 @@ def test_po_files(root=LOCALE_DIR):
     log = logging.getLogger(__name__)
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-    for (dirpath, dirnames, filenames) in os.walk(root):
+    for dirpath, dirnames, filenames in os.walk(root):
         for name in filenames:
             (base, ext) = os.path.splitext(name)
             if ext.lower() == '.po':
@@ -29,3 +29,4 @@ def validate_po_file(filename, log):
     (out, err) = call(['msgfmt','-c', rfile], working_directory=LOCALE_DIR)
     if err != '':
         log.warn('\n'+err)
+    assert not err

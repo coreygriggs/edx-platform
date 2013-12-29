@@ -60,9 +60,12 @@ def merge(locale, target='django.po', fail_if_missing=True):
 def clean_metadata(file):
     """
     Clean up redundancies in the metadata caused by merging.
-    This reads in a PO file and simply saves it back out again.
     """
-    pofile(file).save()
+    # Reading in the .po file and saving it again fixes redundancies.
+    po = pofile(file)
+    # The msgcat tool marks the metadata as fuzzy, but it's ok as it is.
+    po.metadata_is_fuzzy = False
+    po.save()
 
 
 def validate_files(dir, files_to_merge):
