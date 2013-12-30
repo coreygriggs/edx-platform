@@ -132,15 +132,15 @@ class CertificateStatusReport(Report):
                 course = cur_course.number + " " + cur_course.display_name_with_default  # TODO add term (i.e. Fall 2013)?
                 enrollments = CourseEnrollment.enrollments_in(course_id)
                 total_enrolled = enrollments.count()
-                audit_enrolled = enrollments.filter(mode="audit").count()
-                honor_enrolled = enrollments.filter(mode="honor").count()
+                audit_enrolled = CourseEnrollment.enrollments_in(course_id, "audit").count()
+                honor_enrolled = CourseEnrollment.enrollments_in(course_id, "honor").count()
                 # Since every verified enrollment has 1 and only 1 cert item, let's just query those
-                verified_enrollments = CertificateItem.verified_certificates_in(course_id)
+                verified_enrollments = CourseEnrollment.enrollments_in(course_id, "verified")
                 verified_enrolled = verified_enrollments.count()
                 gross_rev_temp = verified_enrollments.aggregate(Sum('unit_cost'))
                 gross_rev = gross_rev_temp['unit_cost__sum']
                 gross_rev_over_min = gross_rev - (CourseMode.objects.get(course_id=course_id, mode_slug="verified").min_price * verified_enrolled)
-                refunded_enrollments = CertificateItem.verified_certificates_refunded_in(course_id)
+                refunded_enrollments = CertificateItem.verified_certificates_in(course_id, "refunded")
                 number_of_refunds = refunded_enrollments.count()
                 dollars_refunded_temp = refunded_enrollments.aggregate(Sum('unit_cost'))
                 if dollars_refunded_temp['unit_cost__sum'] is None:
@@ -198,7 +198,7 @@ class UniversityRevenueShareReport(Report):
                 course = cur_course.number + " " + cur_course.display_name_with_default
                 num_transactions = 0  # TODO clarify with billing what transactions are included in this (purchases? refunds? etc)
 
-                all_paid_certs = CertificateItem.objects.filter(course_id=course_id, status="purchased")
+                all_paid_certs = CertificateItem.verified_certificates_in(course_id, "purchased")
 
                 total_payments_collected_temp = all_paid_certs.aggregate(Sum('unit_cost'))
                 if total_payments_collected_temp['unit_cost__sum'] is None:
@@ -212,7 +212,7 @@ class UniversityRevenueShareReport(Report):
                 else:
                     service_fees = total_service_fees_temp['service_fee__sum']
 
-                refunded_enrollments = CertificateItem.objects.filter(course_id=course_id, status="refunded")
+                refunded_enrollments = CertificateItem.verified_certificates_in(course_id, "refunded")
                 num_refunds = refunded_enrollments.count()
 
                 amount_refunds_temp = refunded_enrollments.aggregate(Sum('unit_cost'))
